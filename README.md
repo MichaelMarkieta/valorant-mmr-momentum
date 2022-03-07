@@ -49,8 +49,7 @@ Password:
             "CompetitiveMovement": "MOVEMENT_UNKNOWN",
             "AFKPenalty": 0
         },
-        { ... 
-        }
+        ...
     ]
 }
 ```
