@@ -14,7 +14,7 @@ pip install -r requirements.txt
 ```
 ```
 python3 valorant-mmr-momentum.py
-❯ python3 valorant-mmr-momentum.py
+
 Username: username
 Password:
 {
