@@ -15,8 +15,8 @@ pip install -r requirements.txt
 ```
 python3 valorant-mmr-momentum.py
 
-Username: username
-Password:
+❯ Username: username
+❯ Password:
 {
     "Version": 0,
     "Subject": "d693ad2b-6026-559d-8c02-df1d943f4c07",
