@@ -1,4 +1,4 @@
-# valorant-mmr
+# valorant-mmr-momentum
 
 Use your riot login and password to obtain your competitive results
 
