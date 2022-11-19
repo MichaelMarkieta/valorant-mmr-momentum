@@ -5,6 +5,7 @@ import json
 import getpass
 import sys
 import os
+import time
 
 
 async def run(username, password):
@@ -100,57 +101,64 @@ async def run(username, password):
     async with session.post('https://auth.riotgames.com/userinfo', headers=headers, json={}) as r:
         data = await r.json()
     user_id = data['sub']
-    #print('User ID: ' + user_id)
+    # user_id = "c4b0521d-89d9-42e9-b905-2347ad2ceb72"
+    # print('User ID: ' + user_id)
     headers['X-Riot-Entitlements-JWT'] = entitlements_token
     headers['X-Riot-ClientVersion'] = "release-04.04-shipping-16-67925"
     headers['X-Riot-ClientPlatform'] = "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQ0LjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9"
 
-    while this_act:
-        async with session.get(f'https://pd.na.a.pvp.net/mmr/v1/players/{user_id}/competitiveupdates?startIndex={match_history_index}&endIndex={match_history_index+19}', headers=headers) as r:
-            data = json.loads(await r.text())
+    competitiveupdates = []
 
-            for match in data["Matches"]:
-                if (match["SeasonID"] != e4a2):
-                    this_act = False
-                    break
+    async with session.get(f'https://pd.na.a.pvp.net/mmr/v1/players/{user_id}/competitiveupdates?startIndex=0&endIndex=19', headers=headers) as r:
+        data = json.loads(await r.text())
+        reversed_matches = data["Matches"][::-1]
+        competitiveupdates += reversed_matches
 
-                if match["RankedRatingEarned"] == 0:
-                    continue
-                else:
-                    if current_act_rank == None:
-                        if int(match["TierAfterUpdate"]) > 0:
-                            current_act_rank = int(match["TierAfterUpdate"])
-                    if peak_act_rank == None:
-                        if int(match["TierAfterUpdate"]) > 0:
-                            peak_act_rank = int(match["TierAfterUpdate"])
-                    if lowest_act_rank == None:
-                        if int(match["TierAfterUpdate"]) > 0:
-                            lowest_act_rank = int(match["TierAfterUpdate"])
+    for match in competitiveupdates:
+        # if (match["SeasonID"] != e4a2):
+        #     this_act = False
+        #     break
 
-                    if match["RankedRatingEarned"] > 0:
-                        win_rr += abs(match["RankedRatingEarned"])
-                        wins += 1
-                        matches_analyzed += 1
-                    elif match["RankedRatingEarned"] < 0:
-                        loss_rr += abs(match["RankedRatingEarned"])
-                        losses += 1
-                        matches_analyzed += 1
+        if match["RankedRatingEarned"] == 0:
+            continue
+        else:
+            match_result = None
+            if current_act_rank == None:
+                if int(match["TierAfterUpdate"]) > 0:
+                    current_act_rank = int(match["TierAfterUpdate"])
+            if peak_act_rank == None:
+                if int(match["TierAfterUpdate"]) > 0:
+                    peak_act_rank = int(match["TierAfterUpdate"])
+            if lowest_act_rank == None:
+                if int(match["TierAfterUpdate"]) > 0:
+                    lowest_act_rank = int(match["TierAfterUpdate"])
 
-                    if int(match["TierAfterUpdate"]) > int(peak_act_rank):
-                        if int(match["TierAfterUpdate"]) > 0:
-                            peak_act_rank = int(match["TierAfterUpdate"])
-                    if int(match["TierAfterUpdate"]) < int(lowest_act_rank):
-                        if int(match["TierAfterUpdate"]) > 0:
-                            lowest_act_rank = int(match["TierAfterUpdate"])
+            if match["RankedRatingEarned"] > 0:
+                win_rr += abs(match["RankedRatingEarned"])
+                wins += 1
+                matches_analyzed += 1
+                match_result = "Win"
+            elif match["RankedRatingEarned"] < 0:
+                loss_rr += abs(match["RankedRatingEarned"])
+                losses += 1
+                matches_analyzed += 1
+                match_result = "Loss"
 
-                    mmr_momentum = (wins and win_rr / wins or 0) - \
-                        (losses and loss_rr / losses or 0)
+            if int(match["TierAfterUpdate"]) > int(peak_act_rank):
+                if int(match["TierAfterUpdate"]) > 0:
+                    peak_act_rank = int(match["TierAfterUpdate"])
+            if int(match["TierAfterUpdate"]) < int(lowest_act_rank):
+                if int(match["TierAfterUpdate"]) > 0:
+                    lowest_act_rank = int(match["TierAfterUpdate"])
 
-                    print(
-                        f'wins: {wins} (+{win_rr}) | losses: {losses} (-{loss_rr}) | mmr_momentum {mmr_momentum:.2f}'
-                    )
+            mmr_momentum = (wins and win_rr / wins or 0) - \
+                (losses and loss_rr / losses or 0)
 
-            match_history_index += 20
+            print(
+                f'{match_result} ({match["RankedRatingEarned"]})\t| wins: {wins} (+{win_rr})\t| losses: {losses} (-{loss_rr})\t| mmr_momentum {mmr_momentum:.2f}'
+                .expandtabs(14)
+            )
+
     await session.close()
 
     print(f"\n")
